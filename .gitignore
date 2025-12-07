@@ -1,2 +1,8 @@
 .venv
+.venv_detr
+.venv_comparison
 data/
+notebooks/Tobedeleted/*
+runs/
+report/
+checkpoints/
