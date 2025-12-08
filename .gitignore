@@ -1,8 +1,117 @@
-.venv
-.venv_detr
-.venv_comparison
+# Virtual Environments
+.venv/
+.venv_detr/
+.venv_comparison/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# LaTeX build artifacts
+*.aux
+*.lof
+*.log
+*.lot
+*.out
+*.synctex.gz
+*.toc
+*.fdb_latexmk
+*.fls
+*.synctex
+
+# Report generation helper files (not needed for submission)
+report/CODE_TEMPLATES_FOR_NOTEBOOKS.md
+report/example_notebook_modifications.md
+report/extract_and_update_report.py
+report/extract_phase2_eda.py
+report/EXTRACTED_METRICS.md
+report/FINAL_MISSING_ELEMENTS_CHECKLIST.md
+report/generate_all_report_images.py
+report/generate_figures.py
+report/generate_model_outputs_comparison.py
+report/generate_model_outputs_comparison.ipynb
+report/NOTEBOOK_ENHANCEMENT_GUIDE.md
+report/phase1_notebook_enhancements.md
+report/PHASE1.5_UPDATE_SUMMARY.md
+report/PHASE2_ADDITIONS.md
+report/QUICK_REFERENCE_ENHANCEMENTS.md
+report/QUICK_START.md
+report/QUICK_STATUS_SUMMARY.md
+report/README_MODEL_OUTPUTS.md
+report/README_PHASE1_ENHANCEMENTS.md
+report/README.md
+report/REPORT_UPDATE_SUMMARY.md
+report/REQUIREMENTS_CHECKLIST.md
+report/requirements_comparison.txt
+report/update_latex_report.py
+report/update_report_comprehensive.py
+report/utils_report.py
+report/extracted_metrics_final.json
+report/main - Copy.pdf
+report/build_report.bat
+
+# Agile helper scripts (not needed for submission)
+agile/convert_to_images.py
+agile/generate_burndown.py
+agile/generate_scrum_board.py
+agile/IMAGE_FILES_SUMMARY.md
+agile/JIRA_SETUP_GUIDE.md
+agile/LOCAL_ARTIFACTS_GUIDE.md
+agile/README.md
+agile/scrum_board_markdown.md
+agile/scrum_board.html
+agile/sprint_summary.html
+agile/burndown_data.csv
+agile/sprint_summary.csv
+agile/jira_export.csv
+
+# Data (large datasets - exclude entire data folder)
 data/
-notebooks/Tobedeleted/*
+
+# Training outputs and runs
 runs/
-report/
+*.pt
+!notebooks/yolov8n.pt
+
+# Checkpoints (keep only best models in Deployment/checkpoints)
 checkpoints/
+!Deployment/checkpoints/
+
+# Temporary files
+temp_cell_content.txt
+*.tmp
+*.bak
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Other helper files
+QUICK_SETUP.md
+install_missing_packages.bat
+tatus
+1.0.0
+
+# One-time use helper batch files (not needed for submission)
+Deployment/run_keep_open.bat
+Deployment/run_debug.bat
+
+# Notebooks to be deleted
+notebooks/Tobedeleted/
