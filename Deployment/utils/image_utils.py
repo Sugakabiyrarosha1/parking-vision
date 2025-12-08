@@ -140,3 +140,4 @@ def preprocess_image(image: np.ndarray, model_type: str = 'ssd', **kwargs) -> to
         raise ValueError(f"Unknown model type: {model_type}")
 
 
+

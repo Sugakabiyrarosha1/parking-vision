@@ -1,0 +1,10 @@
+{
+  "best_params": {
+    "learning_rate": 0.004890595899829171,
+    "batch_size": 16,
+    "optimizer": "AdamW",
+    "weight_decay": 1.19005297589751e-05
+  },
+  "best_value": 0.773352547287941,
+  "n_trials": 10
+}

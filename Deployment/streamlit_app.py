@@ -32,7 +32,7 @@ from utils.image_utils import load_image
 # Page configuration
 st.set_page_config(
     page_title="Parking Vision",
-    page_icon=None,
+    page_icon="🚗",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -92,11 +92,11 @@ def load_model_cached(model_name: str, device: str = "cpu"):
 
 def main():
     # Header
-    st.markdown('<h1 class="main-header">Parking Vision Detection System</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🚗 Parking Vision Detection System</h1>', unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
-        st.header("Configuration")
+        st.header("⚙️ Configuration")
         
         # Model selection
         available_models = list_available_models()
@@ -104,8 +104,8 @@ def main():
         
         # Show debug info if no models available
         if not model_names:
-            st.warning("No models found. Check the debug info below.")
-            with st.expander("Debug Information"):
+            st.warning("⚠️ No models found. Check the debug info below.")
+            with st.expander("🔍 Debug Information"):
                 st.json(available_models)
                 import os
                 from pathlib import Path
@@ -178,7 +178,7 @@ def main():
 
 def single_image_page(model_name: str, device: str, conf_threshold: float):
     """Single image prediction page."""
-    st.header("Single Image Detection")
+    st.header("📸 Single Image Detection")
     
     # Image upload
     uploaded_file = st.file_uploader(
@@ -285,12 +285,12 @@ def single_image_page(model_name: str, device: str, conf_threshold: float):
                 st.error("Failed to load model. Please check the model files.")
     
     else:
-        st.info("Please upload an image to get started")
+        st.info("👆 Please upload an image to get started")
 
 
 def batch_processing_page(model_name: str, device: str, conf_threshold: float):
     """Batch processing page."""
-    st.header("Batch Processing")
+    st.header("📦 Batch Processing")
     
     st.write("Upload multiple images as a ZIP file for batch processing.")
     
@@ -305,12 +305,12 @@ def batch_processing_page(model_name: str, device: str, conf_threshold: float):
         # TODO: Implement batch processing with ZIP extraction
     
     else:
-        st.info("Please upload a ZIP file containing images")
+        st.info("👆 Please upload a ZIP file containing images")
 
 
 def about_page():
     """About page."""
-    st.header("About Parking Vision")
+    st.header("ℹ️ About Parking Vision")
     
     st.write("""
     This application provides parking space detection using deep learning models.
