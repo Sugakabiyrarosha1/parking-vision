@@ -24,13 +24,16 @@ from models.architectures import (
 
 
 # Base directory (Deployment folder)
-BASE_DIR = Path(__file__).parent.parent
+# Path(__file__).parent = Deployment/models/
+# Path(__file__).parent.parent = Deployment/
+DEPLOYMENT_DIR = Path(__file__).parent.parent
 
 
 # Model checkpoint paths (relative to Deployment folder)
+# Checkpoints are located in Deployment/checkpoints/
 CHECKPOINT_PATHS = {
-    'ssd': BASE_DIR / 'checkpoints' / 'phase2_ssd_parking' / 'best_model.pt',
-    'faster_rcnn': BASE_DIR / 'checkpoints' / 'phase2_faster_rcnn_parking' / 'best_model.pt',
+    'ssd': DEPLOYMENT_DIR / 'checkpoints' / 'phase2_ssd_parking' / 'best_model.pt',
+    'faster_rcnn': DEPLOYMENT_DIR / 'checkpoints' / 'phase2_faster_rcnn_parking' / 'best_model.pt',
 }
 
 
