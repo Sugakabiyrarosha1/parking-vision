@@ -32,7 +32,7 @@ from utils.image_utils import load_image
 # Page configuration
 st.set_page_config(
     page_title="Parking Vision",
-    page_icon="🚗",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -70,29 +70,62 @@ def load_model_cached(model_name: str, device: str = "cpu"):
             }
         else:
             return None
+    except FileNotFoundError as e:
+        # Provide more detailed error for missing checkpoints
+        error_msg = f"Model checkpoint not found: {str(e)}\n\n"
+        error_msg += "Please ensure:\n"
+        error_msg += "1. Model checkpoints are in Deployment/checkpoints/\n"
+        error_msg += "2. Checkpoint files are named correctly (best_model.pt)\n"
+        error_msg += "3. Folder structure matches expected paths"
+        st.error(error_msg)
+        import traceback
+        with st.expander("Detailed Error Information"):
+            st.code(traceback.format_exc())
+        return None
     except Exception as e:
         st.error(f"Error loading model: {str(e)}")
         import traceback
-        st.code(traceback.format_exc())
+        with st.expander("Detailed Error Information"):
+            st.code(traceback.format_exc())
         return None
 
 
 def main():
     # Header
-    st.markdown('<h1 class="main-header">🚗 Parking Vision Detection System</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">Parking Vision Detection System</h1>', unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
-        st.header("⚙️ Configuration")
+        st.header("Configuration")
         
         # Model selection
         available_models = list_available_models()
         model_names = [name for name, info in available_models.items() if info.get('exists', False)]
         
+        # Show debug info if no models available
+        if not model_names:
+            st.warning("No models found. Check the debug info below.")
+            with st.expander("Debug Information"):
+                st.json(available_models)
+                import os
+                from pathlib import Path
+                st.write(f"**Current working directory:** {os.getcwd()}")
+                st.write(f"**Deployment directory:** {Path(__file__).parent}")
+                checkpoints_dir = Path(__file__).parent / 'checkpoints'
+                st.write(f"**Checkpoints directory:** {checkpoints_dir}")
+                st.write(f"**Checkpoints directory exists:** {checkpoints_dir.exists()}")
+                if checkpoints_dir.exists():
+                    try:
+                        contents = [str(p) for p in checkpoints_dir.iterdir()]
+                        st.write(f"**Contents:** {contents}")
+                    except Exception as e:
+                        st.write(f"**Error listing contents:** {e}")
+        
         selected_model = st.selectbox(
             "Select Model",
-            options=model_names,
-            help="Choose which model to use for detection"
+            options=model_names if model_names else ["No models available"],
+            help="Choose which model to use for detection",
+            disabled=not model_names
         )
         
         # Device selection
@@ -145,7 +178,7 @@ def main():
 
 def single_image_page(model_name: str, device: str, conf_threshold: float):
     """Single image prediction page."""
-    st.header("📸 Single Image Detection")
+    st.header("Single Image Detection")
     
     # Image upload
     uploaded_file = st.file_uploader(
@@ -252,12 +285,12 @@ def single_image_page(model_name: str, device: str, conf_threshold: float):
                 st.error("Failed to load model. Please check the model files.")
     
     else:
-        st.info("👆 Please upload an image to get started")
+        st.info("Please upload an image to get started")
 
 
 def batch_processing_page(model_name: str, device: str, conf_threshold: float):
     """Batch processing page."""
-    st.header("📦 Batch Processing")
+    st.header("Batch Processing")
     
     st.write("Upload multiple images as a ZIP file for batch processing.")
     
@@ -272,12 +305,12 @@ def batch_processing_page(model_name: str, device: str, conf_threshold: float):
         # TODO: Implement batch processing with ZIP extraction
     
     else:
-        st.info("👆 Please upload a ZIP file containing images")
+        st.info("Please upload a ZIP file containing images")
 
 
 def about_page():
     """About page."""
-    st.header("ℹ️ About Parking Vision")
+    st.header("About Parking Vision")
     
     st.write("""
     This application provides parking space detection using deep learning models.

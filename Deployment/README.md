@@ -212,8 +212,17 @@ pip install -r requirements.txt
 - Change port in `streamlit_app.py` or use `--server.port 8502`
 
 **Models Not Found:**
-- Verify models are in `checkpoints/` folder
+- Verify models are in `Deployment/checkpoints/` folder
 - All `best_model.pt` files should be present
+- Check the debug information in the Streamlit sidebar if models don't appear
+- On Linux, ensure file permissions allow reading the checkpoint files
+- Verify the folder structure matches: `Deployment/checkpoints/phase2_ssd_parking/best_model.pt`
+
+**Linux-Specific Issues:**
+- **Path Resolution**: The code now uses absolute paths with `.resolve()` for better cross-platform compatibility
+- **Case Sensitivity**: Linux is case-sensitive - ensure folder names match exactly (e.g., `phase2_ssd_parking` not `Phase2_SSD_Parking`)
+- **File Permissions**: Ensure checkpoint files are readable: `chmod -R 644 Deployment/checkpoints/**/*.pt`
+- **Working Directory**: Run from the project root or use the `run.sh` script to ensure correct working directory
 
 ## File Structure
 

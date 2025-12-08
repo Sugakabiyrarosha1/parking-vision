@@ -26,14 +26,16 @@ from models.architectures import (
 # Base directory (Deployment folder)
 # Path(__file__).parent = Deployment/models/
 # Path(__file__).parent.parent = Deployment/
-DEPLOYMENT_DIR = Path(__file__).parent.parent
+# Use resolve() to get absolute path for better cross-platform compatibility
+DEPLOYMENT_DIR = Path(__file__).parent.parent.resolve()
 
 
 # Model checkpoint paths (relative to Deployment folder)
 # Checkpoints are located in Deployment/checkpoints/
+# Use absolute paths for better cross-platform compatibility
 CHECKPOINT_PATHS = {
-    'ssd': DEPLOYMENT_DIR / 'checkpoints' / 'phase2_ssd_parking' / 'best_model.pt',
-    'faster_rcnn': DEPLOYMENT_DIR / 'checkpoints' / 'phase2_faster_rcnn_parking' / 'best_model.pt',
+    'ssd': (DEPLOYMENT_DIR / 'checkpoints' / 'phase2_ssd_parking' / 'best_model.pt').resolve(),
+    'faster_rcnn': (DEPLOYMENT_DIR / 'checkpoints' / 'phase2_faster_rcnn_parking' / 'best_model.pt').resolve(),
 }
 
 
@@ -53,7 +55,16 @@ def get_checkpoint_path(model_name: str) -> Path:
     
     path = CHECKPOINT_PATHS[model_name]
     if not path.exists():
-        raise FileNotFoundError(f"Checkpoint not found: {path}")
+        # Provide detailed error message for debugging
+        import os
+        error_msg = f"Checkpoint not found: {path}\n"
+        error_msg += f"Absolute path: {path.absolute()}\n"
+        error_msg += f"Deployment directory: {DEPLOYMENT_DIR}\n"
+        error_msg += f"Current working directory: {os.getcwd()}\n"
+        error_msg += f"Checkpoints directory exists: {(DEPLOYMENT_DIR / 'checkpoints').exists()}\n"
+        if (DEPLOYMENT_DIR / 'checkpoints').exists():
+            error_msg += f"Contents of checkpoints directory: {list((DEPLOYMENT_DIR / 'checkpoints').iterdir())}\n"
+        raise FileNotFoundError(error_msg)
     
     return path
 
@@ -119,6 +130,7 @@ def list_available_models() -> Dict[str, Dict]:
         info = {
             'name': model_name,
             'checkpoint_path': str(path),
+            'checkpoint_path_absolute': str(path.absolute()),
             'exists': exists,
             'type': 'detection'
         }
@@ -129,6 +141,20 @@ def list_available_models() -> Dict[str, Dict]:
                 info['size_mb'] = round(size, 2)
             except:
                 info['size_mb'] = None
+        else:
+            # Add debugging info when file doesn't exist
+            import os
+            info['debug_info'] = {
+                'deployment_dir': str(DEPLOYMENT_DIR),
+                'checkpoints_dir_exists': (DEPLOYMENT_DIR / 'checkpoints').exists(),
+                'current_working_dir': os.getcwd(),
+            }
+            if (DEPLOYMENT_DIR / 'checkpoints').exists():
+                try:
+                    checkpoints_contents = [p.name for p in (DEPLOYMENT_DIR / 'checkpoints').iterdir()]
+                    info['debug_info']['checkpoints_contents'] = checkpoints_contents
+                except:
+                    pass
         
         models_info[model_name] = info
     
