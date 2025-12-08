@@ -4,7 +4,9 @@ Complete deployment package for parking space detection models.
 
 ## Quick Start
 
-### Easy Method (Recommended)
+### Windows
+
+#### Easy Method (Recommended)
 
 **Double-click `run.bat`** - That's it!
 
@@ -13,7 +15,7 @@ The application will automatically:
 2. Start the Streamlit web application
 3. Open in your browser at `http://localhost:8501`
 
-### Manual Method
+#### Manual Method
 
 If the batch file doesn't work:
 
@@ -31,6 +33,46 @@ cd Deployment
 pip install streamlit
 
 # 5. Run the app
+streamlit run streamlit_app.py
+```
+
+### Linux / macOS
+
+#### Easy Method (Recommended)
+
+**Run the shell script**:
+
+```bash
+chmod +x Deployment/run.sh
+./Deployment/run.sh
+```
+
+The application will automatically:
+1. Activate the virtual environment
+2. Start the Streamlit web application
+3. Open in your browser at `http://localhost:8501`
+
+#### Manual Method
+
+If the shell script doesn't work:
+
+```bash
+# 1. Navigate to project root
+cd /path/to/parking-vision
+
+# 2. Create virtual environment if needed
+python3 -m venv .venv
+
+# 3. Activate virtual environment
+source .venv/bin/activate
+
+# 4. Go to Deployment folder
+cd Deployment
+
+# 5. Install dependencies (if needed)
+pip install -r requirements.txt
+
+# 6. Run the app
 streamlit run streamlit_app.py
 ```
 
@@ -137,7 +179,7 @@ After cloning, verify:
 
 ## Usage
 
-1. Start the application using `run.bat`
+1. Start the application using `run.bat` (Windows) or `run.sh` (Linux/macOS)
 2. Select a model from the sidebar
 3. Adjust confidence threshold if needed
 4. Upload a parking lot image
@@ -148,19 +190,23 @@ After cloning, verify:
 
 All dependencies are listed in `requirements.txt`. 
 
-**Note:** The `run.bat` script will automatically install missing dependencies (Streamlit and transformers). If you prefer to install manually:
+**Note:** The `run.bat` (Windows) or `run.sh` (Linux/macOS) script will automatically install missing dependencies (Streamlit and transformers). If you prefer to install manually:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-**Important:** DETR model requires the `transformers` library. If you see an error about missing transformers, make sure you're using the virtual environment (via `run.bat`).
+**Important:** DETR model requires the `transformers` library. If you see an error about missing transformers, make sure you're using the virtual environment (via `run.bat` on Windows or `run.sh` on Linux/macOS).
 
 ## Troubleshooting
 
-**PyTorch DLL Error:**
+**PyTorch DLL Error (Windows):**
 - Make sure you're using the virtual environment (use `run.bat`)
 - Don't run from system Python
+
+**PyTorch Import Error (Linux/macOS):**
+- Make sure you're using the virtual environment (use `run.sh` or activate manually)
+- Ensure PyTorch is installed: `pip install torch torchvision`
 
 **Port Already in Use:**
 - Change port in `streamlit_app.py` or use `--server.port 8502`
@@ -174,7 +220,8 @@ pip install -r requirements.txt
 ```
 Deployment/
 ├── README.md                 # This file
-├── run.bat                   # Main batch file to run the app
+├── run.bat                   # Main batch file to run the app (Windows)
+├── run.sh                    # Main shell script to run the app (Linux/macOS)
 ├── streamlit_app.py          # Streamlit web application
 ├── requirements.txt          # Python dependencies
 ├── checkpoints/              # Model files (best_model.pt)
