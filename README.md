@@ -737,7 +737,7 @@ This project was developed as part of a Deep Learning II course project. The tea
 
 - **Francis Cho** - Project Manager & SAM Model Training
 - **Hitakshi Chugh** - Scrum Master & YOLO Implementation
-- **Sugakabiyrarosha** - Dataset Exploration, CNN Baseline, SSD/DETR Training, Main Report Writing
+- **Sugakabiyrarosha** - Dataset Exploration, CNN Baseline, SSD/DETR Training, Main Report Writing, Deployment 
 - **Alvis Chi Hin Ngan** - Data Augmentation, Faster R-CNN Implementation, Hyperparameter Tuning
 - **John Allan Ellingson** - YOLO Implementation, Clustering Pipeline, Visualizations
 
