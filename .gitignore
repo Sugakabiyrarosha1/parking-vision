@@ -82,9 +82,9 @@ runs/
 *.pt
 !notebooks/yolov8n.pt
 
-# Checkpoints (keep only best models in Deployment/checkpoints)
+# Checkpoints (exclude large model files - use Git LFS if needed)
 checkpoints/
-!Deployment/checkpoints/
+Deployment/checkpoints/**/*.pt
 
 # Temporary files
 temp_cell_content.txt
@@ -113,5 +113,14 @@ tatus
 Deployment/run_keep_open.bat
 Deployment/run_debug.bat
 
+# Streamlit deployment files (only deploying FastAPI to GCP)
+Deployment/Dockerfile.streamlit
+Deployment/.streamlit/
+Deployment/packages.txt
+Deployment/.streamlit/config.toml
+
 # Notebooks to be deleted
 notebooks/Tobedeleted/
+
+# Deployment aid scripts (helper files, not needed in repo)
+Deployment/aid/
