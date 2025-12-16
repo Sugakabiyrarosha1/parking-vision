@@ -1,0 +1,82 @@
+# Production Dockerfile for Parking Vision API
+# Optimized for GCP Cloud Run deployment - Multi-stage build to reduce image size
+
+# Stage 1: Build dependencies
+FROM python:3.10-slim AS builder
+
+WORKDIR /app
+
+# Install system dependencies for building
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy optimized requirements
+COPY requirements.txt.optimized requirements.txt
+
+# Install Python dependencies to user directory
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Stage 2: Runtime (final image)
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install runtime system dependencies
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy installed packages from builder
+COPY --from=builder /root/.local /root/.local
+
+# Make sure scripts in .local are usable
+ENV PATH=/root/.local/bin:$PATH
+ENV PYTHONPATH=/app
+
+# Copy application code
+COPY app.py .
+
+# Copy all required directories
+COPY models/ models/
+COPY inference/ inference/
+COPY utils/ utils/
+COPY static/ static/
+COPY templates/ templates/
+
+# Create checkpoint directories
+RUN mkdir -p /app/checkpoints/phase2_faster_rcnn_parking \
+             /app/checkpoints/phase2_ssd_parking
+
+# Copy only required model checkpoints (only best_model.pt files)
+COPY checkpoints/phase2_faster_rcnn_parking/best_model.pt \
+     /app/checkpoints/phase2_faster_rcnn_parking/best_model.pt
+
+COPY checkpoints/phase2_ssd_parking/best_model.pt \
+     /app/checkpoints/phase2_ssd_parking/best_model.pt
+
+# Create uploads directory with proper permissions
+RUN mkdir -p static/uploads /tmp && \
+    chmod -R 755 static/uploads
+
+# Expose port (Cloud Run uses PORT env var, default 8080)
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT:-8080}/health')" || exit 1
+
+# Run application - Cloud Run requires 0.0.0.0 and PORT env var
+# Use python -m uvicorn to ensure it's found
+CMD ["bash", "-lc", "python -m uvicorn app:app --host 0.0.0.0 --port ${PORT:-8080}"]
+

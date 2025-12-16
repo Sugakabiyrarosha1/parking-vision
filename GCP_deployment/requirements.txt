@@ -1,0 +1,32 @@
+# Web framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+pydantic==2.5.0
+jinja2>=3.1.2
+
+# Deep Learning - CPU ONLY (much smaller, saves ~6GB)
+# Use CPU-only PyTorch for Cloud Run (no GPU support)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.0.0+cpu
+torchvision==0.15.0+cpu
+
+numpy>=1.24.0,<2.0.0  # Pin to NumPy 1.x for compatibility with torchvision
+pillow>=10.0.0
+opencv-python-headless>=4.8.0  # Headless version (no GUI dependencies)
+
+# Data Processing - REMOVED (not needed for inference)
+# pandas>=2.0.0
+# scikit-learn>=1.3.0
+
+# Visualization - REMOVED (not needed for API)
+# matplotlib>=3.7.0
+# seaborn>=0.12.0
+
+# Utilities
+tqdm>=4.66.0
+python-dotenv>=1.0.0
+
+# API utilities
+aiofiles>=23.2.1
+

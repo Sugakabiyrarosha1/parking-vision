@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection Results - Parking Vision</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚗 Parking Vision - Results</h1>
+            <a href="/" class="btn-secondary">← Upload New Image</a>
+        </header>
+
+        <main>
+            {% if error %}
+            <div class="error-message">
+                <h2>Error</h2>
+                <p>{{ error }}</p>
+            </div>
+            {% else %}
+            <div class="results-section">
+                <div class="stats-card">
+                    <h2>Detection Statistics</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Model Used:</span>
+                            <span class="stat-value">{{ model_type|upper }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Total Detections:</span>
+                            <span class="stat-value">{{ num_detections }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Free Spaces:</span>
+                            <span class="stat-value free">{{ free_spaces }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Occupied Spaces:</span>
+                            <span class="stat-value occupied">{{ occupied_spaces }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Confidence Threshold:</span>
+                            <span class="stat-value">{{ conf_threshold }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Processing Time:</span>
+                            <span class="stat-value">{{ processing_time }}s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="image-section">
+                    <h2>Annotated Image</h2>
+                    <div class="image-container">
+                        <img src="data:image/jpeg;base64,{{ visualization_base64 }}" alt="Detection Results" id="resultImage">
+                    </div>
+                </div>
+
+                {% if detections %}
+                <div class="detections-section">
+                    <h2>Detection Details</h2>
+                    <div class="detections-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Class</th>
+                                    <th>Confidence</th>
+                                    <th>Bounding Box</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detection in detections %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td class="class-{{ detection.class_name|lower|replace(' ', '-') }}">
+                                        {{ detection.class_name }}
+                                    </td>
+                                    <td>{{ "%.2f"|format(detection.confidence) }}</td>
+                                    <td>[{{ "%.0f"|format(detection.bbox[0]) }}, {{ "%.0f"|format(detection.bbox[1]) }}, 
+                                         {{ "%.0f"|format(detection.bbox[2]) }}, {{ "%.0f"|format(detection.bbox[3]) }}]</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="actions-section">
+                    <h2>Download Results</h2>
+                    <div class="action-buttons">
+                        <button onclick="downloadJSON()" class="btn-primary">Download JSON</button>
+                        <button onclick="downloadImage()" class="btn-primary">Download Image</button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <script>
+        const detectionData = {{ detection_json|safe }};
+        
+        function downloadJSON() {
+            const dataStr = JSON.stringify(detectionData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'parking_detection_results.json';
+            link.click();
+        }
+
+        function downloadImage() {
+            const img = document.getElementById('resultImage');
+            const link = document.createElement('a');
+            link.href = img.src;
+            link.download = 'parking_detection_result.jpg';
+            link.click();
+        }
+    </script>
+</body>
+</html>
+

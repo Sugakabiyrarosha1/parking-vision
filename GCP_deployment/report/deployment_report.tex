@@ -1,0 +1,630 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{grffile}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{enumitem}
+
+\geometry{margin=1in}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Parking Vision GCP Deployment Report},
+    pdfauthor={Sugakabiyrarosha},
+    pdfsubject={Cloud Deployment Documentation}
+}
+
+\title{\textbf{Parking Vision: Google Cloud Platform Deployment Report}}
+\author{Sugakabiyrarosha}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\vspace{-1cm}
+\begin{center}
+\textbf{Repository:} \url{https://github.com/Sugakabiyrarosha1/parking-vision.git}
+\end{center}
+\vspace{0.5cm}
+
+\begin{abstract}
+This report documents the complete deployment of the Parking Vision application to Google Cloud Platform (GCP) using Cloud Run. The application provides an AI-powered parking space detection system with both web-based HTML interface and RESTful API endpoints. The deployment includes deep learning models (SSD and Faster R-CNN) for object detection, integrated into a FastAPI application with Jinja2 templates for server-side rendering.
+\end{abstract}
+
+\tableofcontents
+\newpage
+\listoffigures
+\newpage
+\listoftables
+\newpage
+
+\section{Introduction}
+
+\subsection{Project Overview}
+Parking Vision is a deep learning-based system designed to detect and classify parking spaces in images. The system utilizes state-of-the-art object detection models to identify free and occupied parking spaces, providing real-time analysis capabilities through a web interface and programmatic API access.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{temp/Intro - ML Canvas .png}
+\caption{Machine Learning Canvas - Project Overview}
+\label{fig:ml_canvas}
+\end{figure}
+
+\subsection{Deployment Objectives}
+The primary objectives of this GCP deployment were:
+\begin{itemize}
+    \item Deploy the application as a single Cloud Run service
+    \item Provide both HTML web interface and JSON API endpoints
+    \item Ensure model checkpoints are included in the container image
+    \item Optimize container size for faster deployment
+    \item Enable public access without authentication (POC phase)
+    \item Document the complete deployment process
+\end{itemize}
+
+\section{Architecture}
+
+\subsection{System Architecture}
+The deployed application follows a monolithic architecture with the following components:
+
+\begin{itemize}
+    \item \textbf{Frontend}: Server-rendered HTML using Jinja2 templates
+    \item \textbf{Backend}: FastAPI application with RESTful API endpoints
+    \item \textbf{Models}: SSD and Faster R-CNN detection models (baked into container)
+    \item \textbf{Infrastructure}: Google Cloud Run (serverless container platform)
+\end{itemize}
+
+\subsection{Technology Stack}
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Component} & \textbf{Technology} \\
+\midrule
+Web Framework & FastAPI 0.104.1 \\
+Template Engine & Jinja2 3.1.2+ \\
+ASGI Server & Uvicorn 0.24.0 \\
+Deep Learning & PyTorch 2.0.0+cpu (CPU-only, optimized) \\
+Computer Vision & OpenCV 4.8.0+ (headless) \\
+Image Processing & Pillow 10.0.0+ \\
+Container Platform & Docker + Cloud Run \\
+\bottomrule
+\end{tabular}
+\caption{Technology Stack}
+\end{table}
+
+\section{Application Structure}
+
+\subsection{Directory Structure}
+The application follows a modular structure:
+
+\begin{lstlisting}[language=bash, basicstyle=\small\ttfamily, extendedchars=false]
+GCP_deployment/
+|-- app.py                 # Main FastAPI application
+|-- Dockerfile             # Container definition
+|-- requirements.txt      # Python dependencies
+|-- models/               # Model architectures and loaders
+|-- inference/            # Inference functions
+|-- utils/                # Utility functions
+|-- templates/            # Jinja2 HTML templates
+|   |-- index.html       # Upload form
+|   `-- result.html      # Results display
+|-- static/               # Static files (CSS, JS)
+|   |-- css/
+|   `-- js/
+`-- checkpoints/          # Model weights
+    |-- phase2_ssd_parking/
+    `-- phase2_faster_rcnn_parking/
+\end{lstlisting}
+
+\subsection{Key Features}
+\begin{enumerate}
+    \item \textbf{HTML Web Interface}: User-friendly upload form with model selection and confidence threshold adjustment
+    \item \textbf{Results Visualization}: Annotated images with bounding boxes and detection statistics
+    \item \textbf{RESTful API}: JSON endpoints for programmatic access (Postman testing)
+    \item \textbf{Model Management}: On-demand model loading with in-memory caching
+    \item \textbf{Health Monitoring}: Health check endpoints for service monitoring
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{temp/Deployment Home Page .png}
+\caption{Web Application Home Page - Upload Interface}
+\label{fig:home_page}
+\end{figure}
+
+\section{Deployment Configuration}
+
+\subsection{Cloud Run Service Configuration}
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Service Name & parking-vision-web \\
+Region & us-central1 \\
+Platform & Managed \\
+Memory & 4 GiB \\
+CPU & 2 vCPU \\
+Timeout & 300 seconds (5 minutes) \\
+Port & 8080 (via PORT env var) \\
+Min Instances & 0 (scales to zero) \\
+Max Instances & 10 \\
+Authentication & Public (unauthenticated) \\
+\bottomrule
+\end{tabular}
+\caption{Cloud Run Configuration}
+\end{table}
+
+\subsection{Docker Configuration}
+The Dockerfile implements the following optimizations:
+\begin{itemize}
+    \item \textbf{Multi-stage build}: Two-stage build (builder + runtime) to reduce image size
+    \item \textbf{CPU-only PyTorch}: Using \texttt{torch==2.0.0+cpu} instead of full version (saves ~6GB)
+    \item \textbf{Minimal dependencies}: Removed unused packages (pandas, scikit-learn, matplotlib, seaborn)
+    \item \textbf{OpenCV headless}: Using \texttt{opencv-python-headless} for smaller footprint
+    \item System dependencies for OpenCV (libgl1, libglib2.0-0, etc.)
+    \item Python 3.10 slim base image
+    \item Model checkpoints included in image (only best\_model.pt files)
+    \item Proper port binding (0.0.0.0:\$PORT)
+\end{itemize}
+
+\subsection{Image Size Optimization}
+The container image was optimized from 9.17GB to 2.03GB (77\% reduction) through:
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Component} & \textbf{Before} & \textbf{After} & \textbf{Savings} \\
+\midrule
+PyTorch (full) & ~6GB & - & - \\
+PyTorch (CPU-only) & - & ~500MB & ~5.5GB \\
+Unused packages & ~500MB & - & ~500MB \\
+Multi-stage build & - & Optimized & ~200MB \\
+\textbf{Total} & \textbf{9.17GB} & \textbf{2.03GB} & \textbf{~7.14GB} \\
+\bottomrule
+\end{tabular}
+\caption{Image Size Optimization Results}
+\end{table}
+
+\subsection{Environment Variables}
+The application uses the following environment variables:
+\begin{itemize}
+    \item \texttt{PORT}: Port number (default: 8080, set by Cloud Run)
+    \item \texttt{DEVICE}: Computation device (default: cpu)
+\end{itemize}
+
+\section{API Endpoints}
+
+\subsection{HTML Endpoints}
+\begin{table}[H]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Method} & \textbf{Path} & \textbf{Description} \\
+\midrule
+GET & / & Upload form (index.html) \\
+POST & /detect & Process image and render results \\
+\bottomrule
+\end{tabular}
+\caption{HTML Endpoints}
+\end{table}
+
+\subsection{JSON API Endpoints}
+\begin{table}[H]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Method} & \textbf{Path} & \textbf{Description} \\
+\midrule
+GET & /health & Health check status \\
+GET & /models & List available models \\
+GET & /models/\{name\} & Get model details \\
+POST & /models/load & Load model into memory \\
+POST & /api/predict & Predict parking spaces (JSON) \\
+GET & /docs & Interactive API documentation \\
+\bottomrule
+\end{tabular}
+\caption{JSON API Endpoints}
+\end{table}
+
+\section{Model Information}
+
+\subsection{Available Models}
+The system includes two detection models:
+
+\begin{enumerate}
+    \item \textbf{SSD (Single Shot Detector)}
+    \begin{itemize}
+        \item Checkpoint: \texttt{phase2\_ssd\_parking/best\_model.pt}
+        \item Size: ~43 MB
+        \item Characteristics: Fast inference, suitable for real-time applications
+    \end{itemize}
+    
+    \item \textbf{Faster R-CNN}
+    \begin{itemize}
+        \item Checkpoint: \texttt{phase2\_faster\_rcnn\_parking/best\_model.pt}
+        \item Size: ~472 MB
+        \item Characteristics: Higher accuracy, better for detailed analysis
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Model Loading Strategy}
+Models are loaded on-demand when first requested, then cached in memory for subsequent requests. This approach:
+\begin{itemize}
+    \item Reduces cold start time
+    \item Optimizes memory usage
+    \item Allows switching between models dynamically
+\end{itemize}
+
+\section{Deployment Process}
+
+\subsection{Prerequisites}
+\begin{enumerate}
+    \item Google Cloud Platform account with billing enabled
+    \item gcloud CLI installed and authenticated
+    \item Required APIs enabled:
+    \begin{itemize}
+        \item Cloud Run API
+        \item Artifact Registry API
+        \item Cloud Build API
+    \end{itemize}
+    \item Docker Desktop (for local testing)
+\end{enumerate}
+
+\subsection{Deployment Steps}
+\begin{enumerate}
+    \item \textbf{Local Testing}: Test application in Docker container
+    \item \textbf{Build Image}: Use Cloud Build to create container image
+    \item \textbf{Push to Registry}: Store image in Artifact Registry
+    \item \textbf{Deploy Service}: Deploy to Cloud Run with specified configuration
+    \item \textbf{Verify Deployment}: Test all endpoints and functionality
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{temp/Cloud build History .png}
+\caption{Cloud Build History - Build Pipeline Overview}
+\label{fig:build_history}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{temp/Build Summary .png}
+\caption{Build Summary - Successful Image Build (Version 2.0)}
+\label{fig:build_summary}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{temp/Artifact Registry - Repository Details .png}
+\caption{Artifact Registry - Docker Image Repository}
+\label{fig:artifact_registry}
+\end{figure}
+
+\subsection{Deployment Commands}
+\begin{lstlisting}[language=bash, basicstyle=\small\ttfamily]
+# Set variables
+PROJECT_ID="parking-vision-deployment"
+REGION="us-central1"
+REPO="parking-vision"
+SERVICE="parking-vision-web"
+
+# Build and push (Version 2.0 - Optimized)
+gcloud builds submit \
+  --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE:2.0 .
+
+# Deploy
+gcloud run deploy $SERVICE \
+  --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE:2.0 \
+  --allow-unauthenticated \
+  --cpu 2 --memory 4Gi \
+  --timeout 300 \
+  --port 8080 \
+  --region us-central1
+\end{lstlisting}
+
+\section{Testing and Validation}
+
+\subsection{Local Testing}
+Before deployment, the application was tested:
+\begin{itemize}
+    \item Locally without Docker (development mode)
+    \item In Docker container (production simulation)
+    \item All HTML routes verified
+    \item All API endpoints tested
+    \item Model loading and inference validated
+\end{itemize}
+
+\subsection{Post-Deployment Testing}
+After deployment, the following tests were performed:
+\begin{enumerate}
+    \item Health check endpoint (\texttt{/health})
+    \item HTML frontend accessibility (\texttt{/})
+    \item Image upload and processing (\texttt{/detect})
+    \item API endpoint via Postman (\texttt{/api/predict})
+    \item Model switching functionality
+    \item Error handling and edge cases
+\end{enumerate}
+
+\subsection{Postman Collection}
+A complete Postman collection has been created for API testing, including:
+\begin{itemize}
+    \item Pre-configured requests for all endpoints
+    \item Test scripts with assertions
+    \item Environment variables for easy URL management
+    \item Error handling for common issues (422 validation errors)
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{temp/POST MAN - Test Results .png}
+\caption{Postman API Test Results - Successful Endpoint Testing}
+\label{fig:postman_tests}
+\end{figure}
+
+\textbf{Postman Team Invite:} \url{https://app.getpostman.com/join-team?invite_code=a328a37becb22e56c6d1761882dfe44ecdfdf85e3b0cabcd6f60493094557e0b&target_code=a411d34d08f5940b1a794a55dd7ebdc6}
+
+\subsection{Application Testing Results}
+The following figures demonstrate the application's functionality with both SSD and Faster R-CNN models:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{temp/Deployment - Load Image for SSD .png}
+\caption{Image Upload Interface - SSD Model Selection}
+\label{fig:upload_ssd}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{temp/Deployment - SSD Results 1 .png}
+\caption{SSD Model Detection Results - Example 1}
+\label{fig:ssd_results1}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{temp/Deployment - SSD Results 2.png}
+\caption{SSD Model Detection Results - Example 2}
+\label{fig:ssd_results2}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{temp/Deployment - SSD Results 3.png}
+\caption{SSD Model Detection Results - Example 3}
+\label{fig:ssd_results3}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{temp/Deployment - Load Image for FRCNN.png}
+\caption{Image Upload Interface - Faster R-CNN Model Selection}
+\label{fig:upload_frcnn}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{temp/Deployment - FRCNN Results 1 .png}
+\caption{Faster R-CNN Model Detection Results - Example 1}
+\label{fig:frcnn_results1}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{temp/Deployment - FRCNN Results 2.png}
+\caption{Faster R-CNN Model Detection Results - Example 2}
+\label{fig:frcnn_results2}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{temp/Deployment - FRCNN Results 3.png}
+\caption{Faster R-CNN Model Detection Results - Example 3}
+\label{fig:frcnn_results3}
+\end{figure}
+
+\section{Performance Considerations}
+
+\subsection{Cold Start}
+\begin{itemize}
+    \item First request may take 10-15 seconds (model loading)
+    \item Subsequent requests are faster (models cached in memory)
+    \item Can be mitigated with \texttt{--min-instances 1} (increases cost)
+\end{itemize}
+
+\subsection{Resource Usage}
+\begin{itemize}
+    \item Memory: ~1-2 GB during inference (depends on model)
+    \item CPU: Efficient utilization with 2 vCPU
+    \item Timeout: 300 seconds sufficient for model loading + inference
+\end{itemize}
+
+\subsection{Scaling}
+\begin{itemize}
+    \item Automatic scaling based on traffic
+    \item Scales to zero when idle (cost optimization)
+    \item Maximum 10 instances under load
+\end{itemize}
+
+\section{Security Considerations}
+
+\subsection{Current Configuration (POC)}
+\begin{itemize}
+    \item Public access enabled (\texttt{--allow-unauthenticated})
+    \item No authentication required
+    \item Suitable for demonstration and testing
+\end{itemize}
+
+\subsection{Production Recommendations}
+For production deployment, considering:
+\begin{itemize}
+    \item Enabling Cloud IAM authentication
+    \item Implementing rate limiting
+    \item Adding request validation and sanitization
+    \item Enabling Cloud Armor for DDoS protection
+    \item Using HTTPS only (enforced by Cloud Run)
+    \item Implementing API key authentication for programmatic access
+\end{itemize}
+
+\section{Cost Analysis}
+
+\subsection{Pricing Model}
+Cloud Run pricing is based on:
+\begin{itemize}
+    \item Request count (first 2 million requests/month free)
+    \item CPU time (first 360,000 GB-seconds/month free)
+    \item Memory time (first 180,000 vCPU-seconds/month free)
+\end{itemize}
+
+\subsection{Estimated Costs}
+For typical usage:
+\begin{itemize}
+    \item Free tier covers most POC usage
+    \item After free tier: ~\$0.00002400 per request
+    \item With 300+ credits: Sufficient for extended testing
+\end{itemize}
+
+\section{Challenges and Solutions}
+
+\subsection{Challenges Encountered}
+\begin{enumerate}
+    \item \textbf{Port Binding}: Initial configuration used hardcoded port
+    \begin{itemize}
+        \item Solution: Updated to use \texttt{\$PORT} environment variable
+    \end{itemize}
+    
+    \item \textbf{Host Binding}: Application bound to localhost
+    \begin{itemize}
+        \item Solution: Changed to \texttt{0.0.0.0} for Cloud Run compatibility
+    \end{itemize}
+    
+    \item \textbf{Template Integration}: FastAPI template support
+    \begin{itemize}
+        \item Solution: Used Starlette's Jinja2Templates integration
+    \end{itemize}
+    
+    \item \textbf{Image Size}: Large container image (9.17GB)
+    \begin{itemize}
+        \item Solution: Multi-stage build + CPU-only PyTorch (reduced to 2.03GB, 77\% reduction)
+    \end{itemize}
+    
+    \item \textbf{Template Attribute Error}: Missing `confidence` attribute in detections
+    \begin{itemize}
+        \item Solution: Added `confidence` as alias for `score` in detection dictionaries
+    \end{itemize}
+    
+    \item \textbf{PATH Configuration}: uvicorn command not found in multi-stage build
+    \begin{itemize}
+        \item Solution: Used `python -m uvicorn` instead of direct `uvicorn` command
+    \end{itemize}
+\end{enumerate}
+
+\section{Lessons Learned}
+
+\begin{enumerate}
+    \item Cloud Run requires strict adherence to container contract (PORT, 0.0.0.0)
+    \item Model loading strategy significantly impacts cold start time
+    \item Jinja2 templates provide clean separation of concerns
+    \item Local Docker testing is essential before cloud deployment
+    \item Proper error handling improves user experience
+\end{enumerate}
+
+\section{Future Enhancements}
+
+\subsection{Recommended Improvements}
+Considering the following enhancements:
+\begin{enumerate}
+    \item \textbf{Authentication}: Implementing user authentication
+    \item \textbf{Caching}: Adding Redis for result caching
+    \item \textbf{Monitoring}: Integrating Cloud Monitoring and Logging
+    \item \textbf{Optimization}: Further reducing container image size (currently 2.03GB, achieved 77\% reduction)
+    \item \textbf{CI/CD}: Automating deployment with Cloud Build triggers
+    \item \textbf{Custom Domain}: Mapping custom domain to Cloud Run service
+    \item \textbf{Load Testing}: Performing comprehensive load testing
+\end{enumerate}
+
+\section{Deployment Results}
+
+\subsection{Final Deployment Status}
+The application was successfully deployed to Google Cloud Run with the following details:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Service Name & parking-vision-web \\
+Service URL & \url{https://parking-vision-web-2lpqmedrkq-uc.a.run.app} \\
+Project ID & parking-vision-deployment \\
+Region & us-central1 \\
+Image Version & 2.0 (optimized) \\
+Image Size & 2.03GB (optimized from 9.17GB) \\
+Build Duration & ~5 minutes (optimized) \\
+Deployment Status & Successfully Deployed \\
+\bottomrule
+\end{tabular}
+\caption{Final Deployment Information}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{{temp/Cloud run - Services.png}}
+\caption{Cloud Run Services Dashboard - Service List}
+\label{fig:cloud_run_services}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{temp/Cloud run - Overview .png}
+\caption{Cloud Run Service Overview - parking-vision-web Details}
+\label{fig:cloud_run_overview}
+\end{figure}
+
+\subsection{Service Endpoints}
+The deployed service provides the following publicly accessible endpoints:
+\begin{itemize}
+    \item \textbf{Frontend}: \url{https://parking-vision-web-2lpqmedrkq-uc.a.run.app/}
+    \item \textbf{Health Check}: \url{https://parking-vision-web-2lpqmedrkq-uc.a.run.app/health}
+    \item \textbf{Models List}: \url{https://parking-vision-web-2lpqmedrkq-uc.a.run.app/models}
+    \item \textbf{API Endpoint}: \url{https://parking-vision-web-2lpqmedrkq-uc.a.run.app/api/predict}
+\end{itemize}
+
+\subsection{Optimization Achievements}
+\begin{enumerate}
+    \item \textbf{Image Size Reduction}: Reduced from 9.17GB to 2.03GB (77\% reduction, ~7.14GB saved)
+    \item \textbf{Build Time}: Reduced from ~13 minutes to ~5 minutes
+    \item \textbf{Cold Start}: Improved due to smaller image size
+    \item \textbf{Cost Efficiency}: Lower storage and transfer costs
+\end{enumerate}
+
+\section{Conclusion}
+
+The Parking Vision application has been successfully deployed to Google Cloud Platform using Cloud Run. The deployment provides both a user-friendly web interface and programmatic API access, making it suitable for various use cases. The system demonstrates effective integration of deep learning models with cloud infrastructure, following best practices for containerized deployments.
+
+Through optimization efforts, the container image size was reduced by 77\%, significantly improving deployment speed and reducing costs. The application is now publicly accessible at \url{https://parking-vision-web-2lpqmedrkq-uc.a.run.app} and ready for demonstration, testing, and further development. The modular architecture allows for easy extension and enhancement as requirements evolve.
+
+\section{References}
+
+\begin{itemize}
+    \item Google Cloud Run Documentation: \url{https://cloud.google.com/run/docs}
+    \item FastAPI Documentation: \url{https://fastapi.tiangolo.com}
+    \item Cloud Run Container Contract: \url{https://cloud.google.com/run/docs/container-contract}
+    \item PyTorch Documentation: \url{https://pytorch.org/docs}
+\end{itemize}
+
+\end{document}
+

@@ -1,0 +1,81 @@
+# Python cache
+__pycache__
+__pycache__/**
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+
+# Git
+.git
+.gitignore
+
+# Virtual environments (exclude all venv folders)
+.venv
+.venv_comparison
+.venv_detr
+venv
+env
+ENV
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Static uploads
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Exclude unnecessary project folders
+../.venv
+../.venv_comparison
+../.venv_detr
+../agile
+../presentation
+../runs
+../report
+../data
+../notebooks
+
+# Exclude unnecessary checkpoint folders (only keep phase2_faster_rcnn_parking and phase2_ssd_parking)
+checkpoints/phase2_cnn_patch
+checkpoints/phase2_detr_parking
+checkpoints/phase2_yolo_parking
+
+# Exclude intermediate checkpoint files (only keep best_model.pt)
+checkpoints/phase2_faster_rcnn_parking/checkpoint_epoch_*.pt
+checkpoints/phase2_ssd_parking/checkpoint_epoch_*.pt
+checkpoints/phase2_ssd_parking/hyperparameter_tuning_results.json
+
+# Deployment helper files
+aid
+run.bat
+run.sh
+run_debug.bat
+run_keep_open.bat
+predict_image.py
+predict_batch.py
+streamlit_app.py
+Dockerfile.streamlit
+GCP_DEPLOYMENT.md
+README.md
+
+# Streamlit (not needed for FastAPI deployment)
+.streamlit
+.streamlit/**
+
+
+
+
+
+
+
+
